@@ -66,7 +66,7 @@ namespace XELF.Experimental.Numerics {
 	/// </summary>
 	public readonly struct DI {
 		public readonly float x;
-		public override string ToString() => x.ToString() + "i";
+		public override string ToString() => x.ToString() + "εi";
 		public DI(float x) { this.x = x; }
 		public static DI operator -(DI i) => new DI(-i.x);
 		public static explicit operator DI(float i) => new DI(i);
@@ -102,7 +102,7 @@ namespace XELF.Experimental.Numerics {
 	/// </summary>
 	public readonly struct DJ {
 		public readonly float y;
-		public override string ToString() => y.ToString() + "j";
+		public override string ToString() => y.ToString() + "εj";
 		public DJ(float y) { this.y = y; }
 		public static DJ operator -(DJ j) => new DJ(-j.y);
 		public static explicit operator DJ(float j) => new DJ(j);
@@ -138,7 +138,7 @@ namespace XELF.Experimental.Numerics {
 	/// </summary>
 	public readonly struct DK {
 		public readonly float z;
-		public override string ToString() => z.ToString() + "k";
+		public override string ToString() => z.ToString() + "εk";
 		public DK(float z) { this.z = z; }
 		public static DK operator -(DK k) => new DK(-k.z);
 		public static explicit operator DK(float k) => new DK(k);
