@@ -4,4 +4,4 @@
 * No warranty
 * Not optimized
 * Functionality insufficiently
-* Test codes provided as a Unity project
+* Test codes provided as a Unity `2018.3+` project
