@@ -38,6 +38,13 @@ namespace Tests {
 			Assert.AreEqual(-(R)1, (I)1 * (J)1 * (K)1);
 		}
 		[Test]
+		public void TestHomogeneous() {
+			var x = ((R)5 * new Reciprocal(2)) * (HR)new H<R>(2, 3);
+			var delta = 1e-4f;
+			Debug.Log(x);
+			Assert.AreEqual(5 / 2f * 2 / 3f, (float)x, delta);
+		}
+		[Test]
 		public void TestQuaternionMultiplication() {
 			var f1 = 1f;
 			var f2 = 2f;
@@ -50,28 +57,29 @@ namespace Tests {
 
 			var q1 = new RIJK((I)f2, (J)f3, (K)f4, (R)f1).Normalized;
 			var q2 = new RIJK((I)f6, (J)f7, (K)f8, (R)f5).Normalized;
-			var q = q1 * q2;
+			var q12 = q1 * q2;
+			var uq1 = (RIJK)q1;
+			var uq2 = (RIJK)q2;
+			var q = (RIJK)q12;
 
-			Debug.Log(q1.r * q2.ijk);
-			Debug.Log(q2.r * q1.ijk);
-			Debug.Log(IJK.Cross(q1.ijk, q2.ijk));
 			var Q1 = new Quaternion(f2, f3, f4, f1).normalized;
 			var Q2 = new Quaternion(f6, f7, f8, f5).normalized;
 			var Q = Q1 * Q2;
 
+			Debug.Log(q12);
 			Debug.Log($"Mine: {q}");
 			Debug.Log($"Unity: {Q}");
 			var delta = 1e-4f;
 
-			Assert.AreEqual(Q1.w, q1.r.w, delta);
-			Assert.AreEqual(Q1.x, q1.i.x, delta);
-			Assert.AreEqual(Q1.y, q1.j.y, delta);
-			Assert.AreEqual(Q1.z, q1.k.z, delta);
+			Assert.AreEqual(Q1.w, uq1.r.w, delta);
+			Assert.AreEqual(Q1.x, uq1.i.x, delta);
+			Assert.AreEqual(Q1.y, uq1.j.y, delta);
+			Assert.AreEqual(Q1.z, uq1.k.z, delta);
 
-			Assert.AreEqual(Q2.w, q2.r.w, delta);
-			Assert.AreEqual(Q2.x, q2.i.x, delta);
-			Assert.AreEqual(Q2.y, q2.j.y, delta);
-			Assert.AreEqual(Q2.z, q2.k.z, delta);
+			Assert.AreEqual(Q2.w, uq2.r.w, delta);
+			Assert.AreEqual(Q2.x, uq2.i.x, delta);
+			Assert.AreEqual(Q2.y, uq2.j.y, delta);
+			Assert.AreEqual(Q2.z, uq2.k.z, delta);
 
 			Assert.AreEqual(Q.w, q.r.w, delta);
 			Assert.AreEqual(Q.x, q.i.x, delta);
@@ -97,7 +105,7 @@ namespace Tests {
 		}
 		[Test]
 		public void TestDualQuaternionRotationPosition() {
-			var r = new RIJK((I)1, (J)2, (K)3, (R)4).Normalized;
+			var r = (RIJK)new RIJK((I)1, (J)2, (K)3, (R)4).Normalized;
 			var p = new Vector3(10, 20, 30);
 			var dq = RIJKD.From(r, p);
 			var p2 = dq.Position;
