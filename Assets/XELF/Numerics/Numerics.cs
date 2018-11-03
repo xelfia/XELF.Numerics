@@ -28,7 +28,9 @@ namespace XELF.Experimental.Numerics {
 			=> (s.w * t.x.d, s.w * t.y.d);
 		public static (R r, D d) operator *(R s, (R r, D d) b) => (s.w * b.r.w, s.w * b.d.d);
 	}
-
+	/// <summary>
+	/// Reciprocal
+	/// </summary>
 	public readonly struct Reciprocal {
 		public readonly float x;
 		public Reciprocal(float x) => this.x = x;
@@ -37,6 +39,10 @@ namespace XELF.Experimental.Numerics {
 		public static H<R> operator *(Reciprocal a, R b) => new H<R>(a, b);
 		public static H<R> operator *(R a, Reciprocal b) => new H<R>(b, a);
 	}
+	/// <summary>
+	/// Homogeneous
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
 	public readonly struct H<T> {
 		public readonly T x;
 		public readonly Reciprocal w;
@@ -44,6 +50,9 @@ namespace XELF.Experimental.Numerics {
 		public H(Reciprocal r, T t) => (x, w) = (t, r);
 		public H(T t, R w) => (x, this.w) = (t, new Reciprocal(w.w));
 	}
+	/// <summary>
+	/// Homogeneous R
+	/// </summary>
 	public readonly struct HR {
 		public readonly H<R> x;
 		public static implicit operator HR(H<R> x) => new HR(x);
@@ -54,17 +63,42 @@ namespace XELF.Experimental.Numerics {
 		public static explicit operator R(HR x) => x.x.x.w / x.x.w.x;
 		public static explicit operator float(HR x) => x.x.x.w / x.x.w.x;
 	}
+	/// <summary>
+	/// Homogeneous IJK
+	/// </summary>
+	public readonly struct HIJK {
+		public readonly H<IJK> x;
+		public override string ToString() => x.ToString();
+		public HIJK(H<IJK> x) => this.x = x;
+		public HIJK(Reciprocal a, IJK b) => x = new H<IJK>(a, b);
+		public static implicit operator HIJK((IJK x, Reciprocal r) t) => new HIJK(new H<IJK>(t.r, t.x));
+		public static explicit operator HIJK(H<IJK> x) => new HIJK(x);
+		public static explicit operator IJK(HIJK x) => (1 / x.x.w.x) * x.x.x;
+		public static HIJK operator *(R x, HIJK y) => (x * y.x.x, y.x.w);
+	}
+	/// <summary>
+	/// Homogeneous RIJK
+	/// </summary>
 	public readonly struct HRIJK {
 		public readonly H<RIJK> x;
 		public override string ToString() => x.ToString();
 		public HRIJK(H<RIJK> x) => this.x = x;
+		public HRIJK(R r, HIJK hijk) => x = new H<RIJK>(hijk.x.w, (r, hijk.x.x));
 		public HRIJK(Reciprocal a, RIJK b) => x = new H<RIJK>(a, b);
 		public static implicit operator HRIJK((RIJK x, Reciprocal r) t) => new HRIJK(new H<RIJK>(t.r, t.x));
 		public static explicit operator HRIJK(H<RIJK> x) => new HRIJK(x);
 		public static explicit operator RIJK(HRIJK x) => (1 / x.x.w.x) * x.x.x;
 		public static HRIJK operator *(HRIJK x, HRIJK y) => (x.x.x * y.x.x, x.x.w * y.x.w);
+		public static HRIJK AngleAxis(float angle, float x, float y, float z)
+			=> AngleAxis(angle, (x, y, z));
+		public static HRIJK AngleAxis(float angle, (float x, float y, float z) axis) {
+			var r = .5f * Deg2Rad * angle;
+			var hijk = new IJK((I)axis.x, (J)axis.y, (K)axis.z).Normalized;
+			var s = Sin(r);
+			var c = Cos(r);
+			return new HRIJK(hijk.x.w, (hijk.x.w.x * c, s * hijk.x.x));
+		}
 	}
-
 	/// <summary>
 	/// Dual Unit ε: dε
 	/// </summary>
@@ -216,11 +250,17 @@ namespace XELF.Experimental.Numerics {
 		public static implicit operator IJK(in (I i, J j, K k) t) => new IJK(t.i, t.j, t.k);
 		public static IJK operator *(R r, IJK b) => (r * b.i, r * b.j, r * b.k);
 		public static IJK operator +(IJK a, IJK b) => (a.i + b.i, a.j + b.j, a.k + b.k);
+		public static IJK operator -(IJK a, IJK b) => (a.i - b.i, a.j - b.j, a.k - b.k);
 		public static R Dot(in IJK a, in IJK b) => a.i * b.i + a.j * b.j + a.k * b.k;
 		public static IJK Cross(in IJK a, in IJK b) => (a.j * b.k + a.k * b.j, a.k * b.i + a.i * b.k, a.i * b.j + a.j * b.i);
+		public R LengthSquared => -i * i - j * j - k * k;
+		public R Length => Sqrt(LengthSquared.w);
+		public Reciprocal ReciprocalLength => new Reciprocal(Length.w);
+		public HIJK Normalized => ReciprocalLength * this;
+		public static HIJK operator *(Reciprocal a, IJK b) => new HIJK(a, b);
 	}
 	/// <summary>
-	/// Quaternion: w + xi + ij + zk
+	/// Quaternion: w + xi + yj + zk
 	/// </summary>
 	public readonly struct RIJK {
 		public readonly R r;
@@ -234,7 +274,8 @@ namespace XELF.Experimental.Numerics {
 		public static implicit operator RIJK(in (R r, I x, J y, K z) t) => new RIJK(t.r, t.x, t.y, t.z);
 		public RIJK(R w, I x, J y, K z) => (r, i, j, k) = (w, x, y, z);
 		public RIJK(I x, J y, K z, R w) => (r, i, j, k) = (w, x, y, z);
-		public HRIJK Normalized => ReciprocalLength * (RIJK)(r, i, j, k);
+		public RIJK(IJK xyz, R w) => (r, i, j, k) = (w, xyz.i, xyz.j, xyz.k);
+		public HRIJK Normalized => ReciprocalLength * this;
 		public R LengthSquared => r * r - i * i - j * j - k * k;
 		public R Length => Sqrt(LengthSquared.w);
 		public Reciprocal ReciprocalLength => new Reciprocal(Length.w);
@@ -242,13 +283,23 @@ namespace XELF.Experimental.Numerics {
 		public static RIJK operator -(in RIJK a, in RIJK b) => (a.r - b.r, a.i - b.i, a.j - b.j, a.k - b.k);
 		public static RIJK operator *(R a, in RIJK b) => (a.w * b.r, a.w * b.i, a.w * b.j, a.w * b.k);
 		public static R Dot(in RIJK a, in RIJK b) => a.r * b.r + IJK.Dot(a.ijk, b.ijk);
+
+		public static RIJK AngleAxis(float angle, float x, float y, float z)
+			=> AngleAxis(angle, (x, y, z));
+		public static RIJK AngleAxis(float angle, (float x, float y, float z) axis) {
+			var r = .5f * Deg2Rad * angle;
+			var ijk = (IJK)new IJK((I)axis.x, (J)axis.y, (K)axis.z).Normalized;
+			var s = Sin(r);
+			var c = Cos(r);
+			return new RIJK(s * ijk, (R)c);
+		}
 		public static RIJK operator *(RIJK a, RIJK b) =>
 			(Dot(a, b), a.r * b.ijk + b.r * a.ijk + IJK.Cross(a.ijk, b.ijk));
 		public static HRIJK operator *(Reciprocal a, RIJK b) => new HRIJK(a, b);
 		public RIJK Conjugate => (r, -i, -j, -k);
 	}
 	/// <summary>
-	/// Dual Quaternion: w + xi + ij + zk + Wε + Xεi + Yεj + Zεk
+	/// Dual Quaternion: w + xi + yj + zk + Wε + Xεi + Yεj + Zεk
 	/// </summary>
 	public readonly struct RIJKD {
 		public readonly R r;

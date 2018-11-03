@@ -34,6 +34,28 @@ namespace Tests {
 			Assert.AreEqual((new R(25), new I(40)), a);
 		}
 		[Test]
+		public void TestQuaternionAngleAxis() {
+			var q = RIJK.AngleAxis(45, 2, 3, 4);
+			var Q = Quaternion.AngleAxis(45, new Vector3(2, 3, 4));
+			var delta = 1e-4f;
+			Assert.AreEqual(Q.x, q.i.x, delta);
+			Assert.AreEqual(Q.y, q.j.y, delta);
+			Assert.AreEqual(Q.z, q.k.z, delta);
+			Assert.AreEqual(Q.w, q.r.w, delta);
+		}
+		[Test]
+		public void TestHomogeneousQuaternionAngleAxis() {
+			var hq = HRIJK.AngleAxis(45, 2, 3, 4);
+			Debug.Log(hq);
+			var q = (RIJK)hq;
+			var Q = Quaternion.AngleAxis(45, new Vector3(2, 3, 4));
+			var delta = 1e-4f;
+			Assert.AreEqual(Q.x, q.i.x, delta);
+			Assert.AreEqual(Q.y, q.j.y, delta);
+			Assert.AreEqual(Q.z, q.k.z, delta);
+			Assert.AreEqual(Q.w, q.r.w, delta);
+		}
+		[Test]
 		public void TestQuaternionUnit() {
 			Assert.AreEqual(-(R)1, (I)1 * (J)1 * (K)1);
 		}
