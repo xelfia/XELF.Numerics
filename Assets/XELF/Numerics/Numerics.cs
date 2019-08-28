@@ -1,4 +1,4 @@
-﻿// © 2018 XELF
+﻿// © 2018-2019 XELF
 // XELF.Numerics
 // https://github.com/xelfia/XELF.Numerics
 
@@ -6,6 +6,38 @@ using UnityEngine;
 using static UnityEngine.Mathf;
 
 namespace XELF.Experimental.Numerics {
+	public readonly struct HN {
+		public readonly int x;
+		public readonly int w;
+
+		public override string ToString() => $"{x}/{w}";
+		public HN(int x, int w) => (this.x, this.w) = (x, w);
+		public static HN operator *(HN x, HN y) => new HN(x.x * y.x, x.w * y.w);
+		public static HN operator /(HN x, HN y) => new HN(x.x * y.w, x.w * y.x);
+		public static HN operator *(HN x, int y) => new HN(x.x * y, x.w);
+		public static HN operator *(int x, HN y) => new HN(x * y.x, y.w);
+		public static HN operator /(HN x, int y) => new HN(x.x, x.w * y);
+		public static HN operator /(int x, HN y) => new HN(x * y.w, y.x);
+		public HN Reduced {
+			get {
+				var y = GCD(x, w);
+				return new HN(x / y, w / y);
+			}
+		}
+		public static int GCD(int a, int b) {
+			if (a < b) {
+				var work = a;
+				(a, b) = (b, work);
+			}
+			var r = -1;
+			while (r != 0) {
+				r = a % b;
+				a = b;
+				b = r;
+			}
+			return a;
+		}
+	}
 	/// <summary>
 	/// Real: w
 	/// </summary>
